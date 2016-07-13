@@ -2,39 +2,39 @@
 
 ## 概述
 
-在ReactiveX中，一个观察者(Observer)订阅一个可观察对象(Observable)。观察者对Observable发射的数据或数据序列作出响应。这种模式可以极大地简化并发操作，因为它创建了一个处于待命状态的观察者哨兵，在未来某个时刻响应Observable的通知，不需要阻塞等待Observable发射数据。
+在ReactiveX中，一個觀察者(Observer)訂閱一個可觀察物件(Observable)。觀察者對Observable發射的數據或數據序列作出響應。這種模式可以極大地簡化並發操作，因為它創建了一個處於待命狀態的觀察者哨兵，在未來某個時刻響應Observable的通知，不需要阻塞等待Observable發射數據。
 
-这篇文章会解释什么是响应式编程模式(reactive pattern)，以及什么是可观察对象(Observables)和观察者(observers)，其它几篇文章会展示如何用操作符组合和改变Observable的行为。
+這篇文章會解釋什麼是響應式編程模式(reactive pattern)，以及什麼是可觀察物件(Observables)和觀察者(observers)，其它幾篇文章會展示如何用操作符組合和改變Observable的行為。
 
 ![Observable](images/legend.png)
 
-#### 相关参考：
+#### 相關參考：
 
-* [Single](Single.md) - 一个特殊的Observable，只发射单个数据。
-
-
-## 背景知识
-
-在很多软件编程任务中，或多或少你都会期望你写的代码能按照编写的顺序，一次一个的顺序执行和完成。但是在ReactiveX中，很多指令可能是并行执行的，之后他们的执行结果才会被观察者捕获，顺序是不确定的。为达到这个目的，你定义一种获取和变换数据的机制，而不是调用一个方法。在这种机制下，存在一个可观察对象(Observable)，观察者(Observer)订阅(Subscribe)它，当数据就绪时，之前定义的机制就会分发数据给一直处于等待状态的观察者哨兵。
-
-这种方法的优点是，如果你有大量的任务要处理，它们互相之间没有依赖关系。你可以同时开始执行它们，不用等待一个完成再开始下一个（用这种方式，你的整个任务队列能耗费的最长时间，不会超过任务里最耗时的那个）。
-
-有很多术语可用于描述这种异步编程和设计模式，在在本文里我们使用这些术语：**一个观察者订阅一个可观察对象** (*An observer subscribes to an Observable*)。通过调用观察者的方法，Observable发射数据或通知给它的观察者。
-
-在其它的文档和场景里，有时我们也将**Observer**叫做*Subscriber*、*Watcher*、*Reactor*。这个模型通常被称作*Reactor模式*。
+* [Single](Single.md) - 一個特殊的Observable，只發射單個數據。
 
 
-## 创建观察者
+## 背景知識
 
-本文使用类似于Groovy的伪代码举例，但是ReactiveX有多种语言的实现。
+在很多軟件編程任務中，或多或少你都會期望你寫的代碼能按照編寫的順序，一次一個的順序執行和完成。但是在ReactiveX中，很多指令可能是並行執行的，之後他們的執行結果才會被觀察者捕獲，順序是不確定的。為達到這個目的，你定義一種獲取和變換數據的機制，而不是調用一個方法。在這種機制下，存在一個可觀察物件(Observable)，觀察者(Observer)訂閱(Subscribe)它，當數據就緒時，之前定義的機制就會分發數據給一直處於等待狀態的觀察者哨兵。
 
-普通的方法调用（不是某种异步方法，也不是Rx中的并行调用），流程通常是这样的：
+這種方法的優點是，如果你有大量的任務要處理，它們互相之間沒有依賴關係。你可以同時開始執行它們，不用等待一個完成再開始下一個（用這種方式，你的整個任務隊列能耗費的最長時間，不會超過任務裡最耗時的那個）。
 
-1. 调用某一个方法
-2. 用一个变量保存方法返回的结果
-3. 使用这个变量和它的新值做些有用的事
+有很多術語可用於描述這種異步編程和設計模式，在在本文裡我們使用這些術語：**一個觀察者訂閱一個可觀察物件** (*An observer subscribes to an Observable*)。通過調用觀察者的方法，Observable發射數據或通知給它的觀察者。
 
-用代码描述就是：
+在其它的文檔和場景裡，有時我們也將**Observer**叫做*Subscriber*、*Watcher*、*Reactor*。這個模型通常被稱作*Reactor模式*。
+
+
+## 創建觀察者
+
+本文使用類似於Groovy的偽代碼舉例，但是ReactiveX有多種語言的實現。
+
+普通的方法調用（不是某種異步方法，也不是Rx中的並行調用），流程通常是這樣的：
+
+1. 調用某一個方法
+2. 用一個變量保存方法返回的結果
+3. 使用這個變量和它的新值做些有用的事
+
+用代碼描述就是：
 
 ```groovy
 // make the call, assign its return value to `returnVal`
@@ -42,14 +42,14 @@ returnVal = someMethod(itsParameters);
 // do something useful with returnVal
 ```
 
-在异步模型中流程更像这样的：
+在異步模型中流程更像這樣的：
 
-1. 定义一个方法，它完成某些任务，然后从异步调用中返回一个值，这个方法是观察者的一部分
-2. 将这个异步调用本身定义为一个Observable
-3. 观察者通过订阅(Subscribe)操作关联到那个Observable
-4. 继续你的业务逻辑，等方法返回时，Observable会发射结果，观察者的方法会开始处理结果或结果集
+1. 定義一個方法，它完成某些任務，然後從異步調用中返回一個值，這個方法是觀察者的一部分
+2. 將這個異步調用本身定義為一個Observable
+3. 觀察者通過訂閱(Subscribe)操作關聯到那個Observable
+4. 繼續你的業務邏輯，等方法返回時，Observable會發射結果，觀察者的方法會開始處理結果或結果集
 
-用代码描述就是：
+用代碼描述就是：
 
 ```groovy
 
@@ -65,25 +65,25 @@ myObservable.subscribe(myOnNext);
 ```
 
 
-### 回调方法 (onNext, onCompleted, onError)
+### 回調方法 (onNext, onCompleted, onError)
 
-Subscribe方法用于将观察者连接到Observable，你的观察者需要实现以下方法的一个子集：
+Subscribe方法用於將觀察者連接到Observable，你的觀察者需要實現以下方法的一個子集：
 
 * **onNext(T item)**
 
-    Observable调用这个方法发射数据，方法的参数就是Observable发射的数据，这个方法可能会被调用多次，取决于你的实现。
+    Observable調用這個方法發射數據，方法的參數就是Observable發射的數據，這個方法可能會被調用多次，取決於你的實現。
 
 * **onError(Exception ex)**
 
-    当Observable遇到错误或者无法返回期望的数据时会调用这个方法，这个调用会终止Observable，后续不会再调用onNext和onCompleted，onError方法的参数是抛出的异常。
+    當Observable遇到錯誤或者無法返回期望的數據時會調用這個方法，這個調用會終止Observable，後續不會再調用onNext和onCompleted，onError方法的參數是拋出的異常。
 
 * **onComplete**
 
-    正常终止，如果没有遇到错误，Observable在最后一次调用onNext之后调用此方法。
+    正常終止，如果沒有遇到錯誤，Observable在最後一次調用onNext之後調用此方法。
 
-根据Observable协议的定义，onNext可能会被调用零次或者很多次，最后会有一次onCompleted或onError调用（不会同时），传递数据给onNext通常被称作发射，onCompleted和onError被称作通知。
+根據Observable協議的定義，onNext可能會被調用零次或者很多次，最後會有一次onCompleted或onError調用（不會同時），傳遞數據給onNext通常被稱作發射，onCompleted和onError被稱作通知。
 
-下面是一个更完整的例子：
+下面是一個更完整的例子：
 
 ```groovy
 
@@ -96,51 +96,51 @@ myObservable.subscribe(myOnNext, myError, myComplete);
 
 ```
 
-### 取消订阅 (Unsubscribing)
+### 取消訂閱 (Unsubscribing)
 
-在一些ReactiveX实现中，有一个特殊的观察者接口*Subscriber*，它有一个*unsubscribe*方法。调用这个方法表示你不关心当前订阅的Observable了，因此Observable可以选择停止发射新的数据项（如果没有其它观察者订阅）。
+在一些ReactiveX實現中，有一個特殊的觀察者接口*Subscriber*，它有一個*unsubscribe*方法。調用這個方法表示你不關心當前訂閱的Observable了，因此Observable可以選擇停止發射新的數據項（如果沒有其它觀察者訂閱）。
 
-取消订阅的结果会传递给这个Observable的操作符链，而且会导致这个链条上的每个环节都停止发射数据项。这些并不保证会立即发生，然而，对一个Observable来说，即使没有观察者了，它也可以在一个while循环中继续生成并尝试发射数据项。
+取消訂閱的結果會傳遞給這個Observable的操作符鏈，而且會導致這個鏈條上的每個環節都停止發射數據項。這些並不保證會立即發生，然而，對一個Observable來說，即使沒有觀察者了，它也可以在一個while循環中繼續生成並嘗試發射數據項。
 
-### 关于命名约定
+### 關於命名約定
 
-ReactiveX的每种特定语言的实现都有自己的命名偏好，虽然不同的实现之间有很多共同点，但并不存在一个统一的命名标准。
+ReactiveX的每種特定語言的實現都有自己的命名偏好，雖然不同的實現之間有很多共同點，但並不存在一個統一的命名標準。
 
-而且，在某些场景中，一些名字有不同的隐含意义，或者在某些语言看来比较怪异。
+而且，在某些場景中，一些名字有不同的隱含意義，或者在某些語言看來比較怪異。
 
-例如，有一个*onEvent*命名模式(onNext, onCompleted, onError)，在一些场景中，这些名字可能意味着事件处理器已经注册。然而在ReactiveX里，他们是事件处理器的名字。
+例如，有一個*onEvent*命名模式(onNext, onCompleted, onError)，在一些場景中，這些名字可能意味著事件處理器已經註冊。然而在ReactiveX裡，他們是事件處理器的名字。
 
 
-## Observables的"热"和"冷"
+## Observables的"熱"和"冷"
 
-Observable什么时候开始发射数据序列？这取决于Observable的实现，一个"热"的Observable可能一创建完就开始发射数据，因此所有后续订阅它的观察者可能从序列中间的某个位置开始接受数据（有一些数据错过了）。一个"冷"的Observable会一直等待，直到有观察者订阅它才开始发射数据，因此这个观察者可以确保会收到整个数据序列。
+Observable什麼時候開始發射數據序列？這取決於Observable的實現，一個"熱"的Observable可能一創建完就開始發射數據，因此所有後續訂閱它的觀察者可能從序列中間的某個位置開始接受數據（有一些數據錯過了）。一個"冷"的Observable會一直等待，直到有觀察者訂閱它才開始發射數據，因此這個觀察者可以確保會收到整個數據序列。
 
-在一些ReactiveX实现里，还存在一种被称作*Connectable*的Observable，不管有没有观察者订阅它，这种Observable都不会开始发射数据，除非Connect方法被调用。
+在一些ReactiveX實現裡，還存在一種被稱作*Connectable*的Observable，不管有沒有觀察者訂閱它，這種Observable都不會開始發射數據，除非Connect方法被調用。
 
-## 用操作符组合Observable
+## 用操作符組合Observable
 
-对于ReactiveX来说，Observable和Observer仅仅是个开始，它们本身不过是标准观察者模式的一些轻量级扩展，目的是为了更好的处理事件序列。
+對於ReactiveX來說，Observable和Observer僅僅是個開始，它們本身不過是標準觀察者模式的一些輕量級擴展，目的是為了更好的處理事件序列。
 
-ReactiveX真正强大的地方在于它的操作符，操作符让你可以变换、组合、操纵和处理Observable发射的数据。
+ReactiveX真正強大的地方在於它的操作符，操作符讓你可以變換、組合、操縱和處理Observable發射的數據。
 
-Rx的操作符让你可以用声明式的风格组合异步操作序列，它拥有回调的所有效率优势，同时又避免了典型的异步系统中嵌套回调的缺点。
+Rx的操作符讓你可以用聲明式的風格組合異步操作序列，它擁有回調的所有效率優勢，同時又避免了典型的異步系統中嵌套回調的缺點。
 
 下面是常用的操作符列表：
 
-1. [创建操作](operators/Creating-Observables.md) Create, Defer, Empty/Never/Throw, From, Interval, Just, Range, Repeat, Start, Timer
-2. [变换操作](operators/Transforming-Observables.md) Buffer, FlatMap, GroupBy, Map, Scan和Window
-3. [过滤操作](operators/Filter-Observables.md) Debounce, Distinct, ElementAt, Filter, First, IgnoreElements, Last, Sample, Skip, SkipLast, Take, TakeLast
-4. [组合操作](operators/Combining-Observables.md) And/Then/When, CombineLatest, Join, Merge, StartWith, Switch, Zip
-5. [错误处理](operators/Error-Handling-Observables.md) Catch和Retry
-6. [辅助操作](operators/Observable-Utility-Operators.md) Delay, Do, Materialize/Dematerialize, ObserveOn, Serialize, Subscribe, SubscribeOn, TimeInterval, Timeout, Timestamp, Using
-7. [条件和布尔操作](operators/Conditional-Observables.md) All, Amb, Contains, DefaultIfEmpty, SequenceEqual, SkipUntil, SkipWhile, TakeUntil, TakeWhile
-8. [算术和集合操作](operators/Mathematical-and-Aggregate-Operators.md) Average, Concat, Count, Max, Min, Reduce, Sum
-9. [转换操作](operators/To.md) To
-10. [连接操作](operators/Connectable-Observable-Operators.md) Connect, Publish, RefCount, Replay
-11. [反压操作](topics/Backpressure.md)，用于增加特殊的流程控制策略的操作符
+1. [創建操作](operators/Creating-Observables.md) Create, Defer, Empty/Never/Throw, From, Interval, Just, Range, Repeat, Start, Timer
+2. [變換操作](operators/Transforming-Observables.md) Buffer, FlatMap, GroupBy, Map, Scan和Window
+3. [過濾操作](operators/Filter-Observables.md) Debounce, Distinct, ElementAt, Filter, First, IgnoreElements, Last, Sample, Skip, SkipLast, Take, TakeLast
+4. [組合操作](operators/Combining-Observables.md) And/Then/When, CombineLatest, Join, Merge, StartWith, Switch, Zip
+5. [錯誤處理](operators/Error-Handling-Observables.md) Catch和Retry
+6. [輔助操作](operators/Observable-Utility-Operators.md) Delay, Do, Materialize/Dematerialize, ObserveOn, Serialize, Subscribe, SubscribeOn, TimeInterval, Timeout, Timestamp, Using
+7. [條件和布爾操作](operators/Conditional-Observables.md) All, Amb, Contains, DefaultIfEmpty, SequenceEqual, SkipUntil, SkipWhile, TakeUntil, TakeWhile
+8. [算術和集合操作](operators/Mathematical-and-Aggregate-Operators.md) Average, Concat, Count, Max, Min, Reduce, Sum
+9. [轉換操作](operators/To.md) To
+10. [連接操作](operators/Connectable-Observable-Operators.md) Connect, Publish, RefCount, Replay
+11. [反壓操作](topics/Backpressure.md)，用於增加特殊的流程控制策略的操作符
 
-这些操作符并不全都是ReactiveX的核心组成部分，有一些是语言特定的实现或可选的模块。
+這些操作符並不全都是ReactiveX的核心組成部分，有一些是語言特定的實現或可選的模組。
 
 ## RxJava
 
-在RxJava中，一个实现了_Observer_接口的对象可以订阅(_subscribe_)一个_Observable_ 类的实例。订阅者(subscriber)对Observable发射(_emit_)的任何数据或数据序列作出响应。这种模式简化了并发操作，因为它不需要阻塞等待Observable发射数据，而是创建了一个处于待命状态的观察者哨兵，哨兵在未来某个时刻响应Observable的通知。
+在RxJava中，一個實現了_Observer_接口的物件可以訂閱(_subscribe_)一個_Observable_ 類的實例。訂閱者(subscriber)對Observable發射(_emit_)的任何數據或數據序列作出響應。這種模式簡化了並發操作，因為它不需要阻塞等待Observable發射數據，而是創建了一個處於待命狀態的觀察者哨兵，哨兵在未來某個時刻響應Observable的通知。
